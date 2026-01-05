@@ -1,0 +1,14 @@
+# Binaries
+tls-check
+*.exe
+
+# Go build artifacts
+/bin/
+/dist/
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
