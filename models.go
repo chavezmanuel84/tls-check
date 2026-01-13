@@ -1,18 +1,25 @@
 package main
 
 type SSLResponse struct {
-	Status    string     `json:"status"`
-	Endpoints []Endpoint `json:"endpoints"`
-	Certs     []Cert     `json:"certs"`
+	Status        string     `json:"status"`
+	StatusMessage string     `json:"statusMessage"`
+	Endpoints     []Endpoint `json:"endpoints"`
+	Certs         []Cert     `json:"certs"`
 }
 
 type Endpoint struct {
-	Grade   string  `json:"grade"`
-	Details Details `json:"details"`
+	IPAddress            string  `json:"ipAddress"`
+	ServerName           string  `json:"serverName,omitempty"`
+	Grade                string  `json:"grade,omitempty"`
+	StatusMessage        string  `json:"statusMessage"`
+	StatusDetails        string  `json:"statusDetails"`
+	StatusDetailsMessage string  `json:"statusDetailsMessage"`
+	Details              Details `json:"details"`
 }
 
 type Details struct {
-	Protocols []Protocol `json:"protocols"`
+	CertChains []CertChain `json:"certChains"`
+	Protocols  []Protocol  `json:"protocols"`
 }
 
 type Protocol struct {
@@ -20,6 +27,12 @@ type Protocol struct {
 	Version string `json:"version"`
 }
 
+type CertChain struct {
+	Id      string   `json:"id"`
+	CertIds []string `json:"certIds"`
+}
+
 type Cert struct {
-	NotAfter int64 `json:"notAfter"`
+	Id       string `json:"id"`
+	NotAfter int64  `json:"notAfter"`
 }

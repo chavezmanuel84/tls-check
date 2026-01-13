@@ -1,61 +1,85 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"fmt"
-	"os"
 	"time"
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: tls-check <domain>")
+	raw := flag.Bool("raw", false, "output raw JSON")
+	flag.Parse()
+
+	if flag.NArg() < 1 {
+		fmt.Println("Usage: tls-check [--raw] <domain>")
 		return
 	}
 
-	domain := os.Args[1]
+	domain := flag.Arg(0)
 
-	for {
-		result, err := fetchSSLStatus(domain)
+	// Analyze host (polling handled in analyzeHost())
+	result, err := analyzeHost(domain)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	if *raw {
+		data, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
-			fmt.Println("Error", err)
+			fmt.Println("Error:", err)
 			return
 		}
-
-		fmt.Println("Status", result.Status)
-
-		if result.Status == "READY" {
-			fmt.Println("Analysis completed")
-			break
-		}
-
-		fmt.Println("Waiting 10 seconds...")
-		time.Sleep(10 * time.Second)
+		fmt.Println(string(data))
+		return
 	}
-
-	result, _ := fetchSSLStatus(domain)
 
 	fmt.Println()
-	fmt.Println("TLS Info for:", domain)
+	fmt.Println("TLS Report for:", domain)
 	fmt.Println("--------------------------------")
 
-	if len(result.Endpoints) > 0 {
-		ep := result.Endpoints[0]
-
-		fmt.Println("✔ Grade:", ep.Grade)
-
-		fmt.Print("✔ Protocols: ")
-		for i, p := range ep.Details.Protocols {
-			if i > 0 {
-				fmt.Print(", ")
-			}
-			fmt.Print(p.Name, " ", p.Version)
-		}
-		fmt.Println()
+	// Build cert lookup map
+	certMap := make(map[string]Cert)
+	for _, cert := range result.Certs {
+		certMap[cert.Id] = cert
 	}
 
-	// Certificate
-	if len(result.Certs) > 0 {
-		expiration := time.Unix(result.Certs[0].NotAfter/1000, 0)
-		fmt.Println("✔ Certificate valid until:", expiration.Format("2006-01-02"))
+	// Iterate all endpoints
+	for _, ep := range result.Endpoints {
+		fmt.Println()
+		fmt.Println("Endpoint:", ep.IPAddress)
+
+		if ep.StatusMessage != "" {
+			fmt.Println("Status:", ep.StatusMessage)
+		}
+
+		if ep.Grade != "" {
+			fmt.Println("Grade:", ep.Grade)
+		}
+
+		// Protocols
+		if len(ep.Details.Protocols) > 0 {
+			fmt.Print("Protocols: ")
+			for i, p := range ep.Details.Protocols {
+				if i > 0 {
+					fmt.Print(", ")
+				}
+				fmt.Print(p.Name, " ", p.Version)
+			}
+			fmt.Println()
+		}
+
+		// Certificate expiration (leaf cert)
+		if len(ep.Details.CertChains) > 0 &&
+			len(ep.Details.CertChains[0].CertIds) > 0 {
+
+			leafCertID := ep.Details.CertChains[0].CertIds[0]
+			if cert, ok := certMap[leafCertID]; ok {
+				expiration := time.Unix(cert.NotAfter/1000, 0)
+				fmt.Println("Certificate valid until:",
+					expiration.Format("2006-01-02"))
+			}
+		}
 	}
 }
