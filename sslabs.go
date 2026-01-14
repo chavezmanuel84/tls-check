@@ -32,12 +32,11 @@ func analyzeHost(domain string) (SSLResponse, error) {
 		}
 
 		var result SSLResponse
-		err = json.NewDecoder(resp.Body).Decode(&result)
-		resp.Body.Close()
-
-		if err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			resp.Body.Close()
 			return SSLResponse{}, err
 		}
+		resp.Body.Close()
 
 		// Print only when status changes
 		if result.Status != lastStatus {
