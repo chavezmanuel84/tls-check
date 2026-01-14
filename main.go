@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -13,9 +14,9 @@ func main() {
 	raw := flag.Bool("raw", false, "output raw JSON")
 	flag.Parse()
 
-	if flag.NArg() < 1 {
+	if flag.NArg() != 1 {
 		fmt.Println("Usage: tls-check [--raw] <domain>")
-		return
+		os.Exit(1)
 	}
 
 	domain := flag.Arg(0)
