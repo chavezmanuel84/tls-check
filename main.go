@@ -74,6 +74,8 @@ func main() {
 		}
 
 		// Certificate expiration (leaf cert)
+		// Per RFC 8446, the end-entity (leaf) certificate MUST be first
+		// datatracker.ietf.org/doc/html/rfc8446
 		if len(ep.Details.CertChains) > 0 &&
 			len(ep.Details.CertChains[0].CertIds) > 0 {
 
