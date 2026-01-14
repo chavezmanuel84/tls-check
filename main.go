@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+const dateFormat = "2006-01-02"
+
 func main() {
 	raw := flag.Bool("raw", false, "output raw JSON")
 	flag.Parse()
